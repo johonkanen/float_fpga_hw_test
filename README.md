@@ -12,12 +12,12 @@ real silicon over a serial link:
   (Agilex build only), for a side-by-side comparison
 * **`float_to_fixed`** — the denormaliser `trunc(x · 2^radix)` converter
 
-Two builds share one `hfloat_core`:
+Two builds share one `top_test_hfloat`:
 
-| target | board | toolchain | clock | UART |
-|--------|-------|-----------|-------|------|
-| `agilex/` | Arrow AXC3000 (Agilex 3 `A3CY100BM16AE7S`) | Quartus Prime Pro | 25 MHz → IOPLL → 100 MHz | 100e6 / 25 = **4.0 MBaud** |
-| `titanium/` | Efinix Ti60F225 dev kit | Efinity 2026.1 | 50 MHz → PLL → 120 MHz | 120e6 / 25 = **4.8 MBaud** |
+ | target      | board                                      | toolchain         | clock                    | UART                       |
+ | --------    | -------                                    | -----------       | -------                  | ------                     |
+ | `agilex/`   | Arrow AXC3000 (Agilex 3 `A3CY100BM16AE7S`) | Quartus Prime Pro | 25 MHz → IOPLL → 100 MHz | 100e6 / 25 = **4.0 MBaud** |
+ | `titanium/` | Efinix Ti60F225 custom board               | Efinity 2026.1    | 50 MHz → PLL → 120 MHz   | 120e6 / 25 = **4.8 MBaud** |
 
 Both dividers land on rates the host FT4232H generates exactly
 (12 MHz / 3 and 12 MHz / 2.5), so the link runs without baud skew.

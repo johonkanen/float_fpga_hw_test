@@ -12,7 +12,7 @@ fpga_communication serial protocol directly: 1-byte command, 2-byte
 address, 4-byte data, big-endian.  Response frames are read as 7 bytes
 and the last 4 are the data word.
 
-Register map (see hfloat_core.vhd):
+Register map (see top_test_hfloat.vhd):
     1  id 0x0000FACE                                RO
     2  git hash                                     RO
     3  loopback                                     RW

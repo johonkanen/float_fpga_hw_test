@@ -46,7 +46,7 @@ begin
         ,outclk_0 => core_clock
     );
 
-    u_core : entity work.hfloat_core
+    u_core : entity work.top_test_hfloat
     generic map (
         g_clock_divider => 25
         ,g_has_native_fp => true

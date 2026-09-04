@@ -70,7 +70,7 @@ end entity titanium_top;
 architecture rtl of titanium_top is
 begin
 
-    u_core : entity work.hfloat_core
+    u_core : entity work.top_test_hfloat
     generic map (
         g_clock_divider  => 25          -- 120 MHz / 25 = 4.8 MBaud
         ,g_has_native_fp => false

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- hfloat_core - target-agnostic UART test harness for hVHDL_floating_point.
+-- top_test_hfloat - target-agnostic UART test harness for hVHDL_floating_point.
 --
 -- Exposes, over the fpga_communication UART register interface
 -- (32-bit data, 16-bit address):
@@ -30,7 +30,7 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-entity hfloat_core is
+entity top_test_hfloat is
     generic (
         g_clock_divider : natural := 25;      -- clock (Hz) / baud; 120e6/25 = 4.8 MBaud
         g_has_native_fp : boolean := false
@@ -41,9 +41,9 @@ entity hfloat_core is
         uart_rx : in  std_logic;
         uart_tx : out std_logic
     );
-end entity hfloat_core;
+end entity top_test_hfloat;
 
-architecture rtl of hfloat_core is
+architecture rtl of top_test_hfloat is
 
     use work.fpga_interconnect_pkg.all;
     use work.multiply_add_pkg.all;

@@ -12,9 +12,12 @@
 --   16 : FMA operand a  (IEEE-754 binary32)              RW
 --   17 : FMA operand b                                   RW
 --   18 : FMA operand c                                   RW
---   19 : FMA result a*b + c  - hVHDL soft multiply_add   RO
+--   19 : FMA result a*b + c  - multiply_add(hfloat)      RO
 --   20 : soft FMA pipeline latency, clock edges          RO
 --   21 : write -> run the soft FMA latency probe         WO
+--   22 : FMA result a*b + c  - multiply_add(fast_hfloat) RO
+--   23 : fast FMA pipeline latency, clock edges          RO
+--   27 : write -> run the fast FMA latency probe         WO
 --   24 : FMA result a*b + c  - Agilex native_fp32        RO   (0 on Titanium)
 --   25 : native FMA pipeline latency, clock edges        RO   (0 on Titanium)
 --   26 : write -> run the native FMA latency probe       WO
@@ -77,6 +80,13 @@ architecture rtl of top_test_hfloat is
     signal soft_result : std_logic_vector(31 downto 0) := (others => '0');
     signal soft_a_fp32, soft_b_fp32, soft_c_fp32 : std_logic_vector(31 downto 0) := (others => '0');
 
+    -- fast path: hVHDL multiply_add(fast_hfloat), same hfloat serialisation,
+    -- runs in parallel with the reference architecture off the same operands
+    signal fast_in    : soft_ref.mpya_in'subtype  := soft_ref.mpya_in;
+    signal fast_out   : soft_ref.mpya_out'subtype := soft_ref.mpya_out;
+    signal fast_result : std_logic_vector(31 downto 0) := (others => '0');
+    signal fast_a_fp32, fast_b_fp32, fast_c_fp32 : std_logic_vector(31 downto 0) := (others => '0');
+
     -- native path: multiply_add(agilex) / native_fp32, plain fp32
     constant nat_ref  : mpya_subtype_record := create_mpya_typeref;
     signal native_in  : nat_ref.mpya_in'subtype  := nat_ref.mpya_in;
@@ -95,14 +105,18 @@ architecture rtl of top_test_hfloat is
     type probe_state_t is (P_IDLE, P_SETTLE, P_MEASURE, P_DONE);
     signal probe_state   : probe_state_t := P_IDLE;
     signal probe_active  : std_logic := '0';
-    signal probe_native  : std_logic := '0';   -- 0 = measure soft, 1 = measure native
+    signal probe_native  : std_logic := '0';   -- 1 = measure native path
+    signal probe_fast    : std_logic := '0';   -- 1 = measure fast_hfloat path
     signal probe_a       : std_logic_vector(31 downto 0) := c_fma_a0;
     signal probe_wait    : natural range 0 to 255 := 0;
     signal probe_count   : natural range 0 to 255 := 0;
     signal soft_latency  : std_logic_vector(31 downto 0) := (others => '0');
+    signal fast_latency  : std_logic_vector(31 downto 0) := (others => '0');
     signal nat_latency   : std_logic_vector(31 downto 0) := (others => '0');
     signal probe_trig_s  : std_logic := '0';   -- toggles on write to 21
     signal probe_seen_s  : std_logic := '0';
+    signal probe_trig_f  : std_logic := '0';   -- toggles on write to 27
+    signal probe_seen_f  : std_logic := '0';
     signal probe_trig_n  : std_logic := '0';   -- toggles on write to 26
     signal probe_seen_n  : std_logic := '0';
 
@@ -160,6 +174,11 @@ begin
             if write_is_requested_to_address(bus_from_communications, 21) then
                 probe_trig_s <= not probe_trig_s;
             end if;
+            connect_read_only_data_to_address(bus_from_communications, bus_from_top, 22, fast_result);
+            connect_read_only_data_to_address(bus_from_communications, bus_from_top, 23, fast_latency);
+            if write_is_requested_to_address(bus_from_communications, 27) then
+                probe_trig_f <= not probe_trig_f;
+            end if;
             connect_read_only_data_to_address(bus_from_communications, bus_from_top, 24, native_result);
             connect_read_only_data_to_address(bus_from_communications, bus_from_top, 25, nat_latency);
             if write_is_requested_to_address(bus_from_communications, 26) then
@@ -205,9 +224,9 @@ begin
     -- fp32 to the native hfloat serialisation on the way in, and the
     -- result back to fp32 on the way out.  The latency probe overrides
     -- operand a while it runs.
-    soft_a_fp32 <= probe_a when probe_active = '1' and probe_native = '0' else fp_a;
-    soft_b_fp32 <= c_fma_b when probe_active = '1' and probe_native = '0' else fp_b;
-    soft_c_fp32 <= c_fma_c when probe_active = '1' and probe_native = '0' else fp_c;
+    soft_a_fp32 <= probe_a when probe_active = '1' and probe_native = '0' and probe_fast = '0' else fp_a;
+    soft_b_fp32 <= c_fma_b when probe_active = '1' and probe_native = '0' and probe_fast = '0' else fp_b;
+    soft_c_fp32 <= c_fma_c when probe_active = '1' and probe_native = '0' and probe_fast = '0' else fp_c;
 
     soft_in.mpy_a        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(soft_a_fp32));
     soft_in.mpy_b        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(soft_b_fp32));
@@ -219,6 +238,25 @@ begin
     port map (clock => clock, mpya_in => soft_in, mpya_out => soft_out);
 
     soft_result <= hfloat_to_fp32(to_hfloat(get_mpya_result(soft_out), hfloat_fp32_zero));
+
+------------------------------------------------------------------------
+    -- fast FMA - hVHDL multiply_add(fast_hfloat), same fp32 <-> hfloat glue
+    -- as the reference path, wired up in parallel.  Its own latency probe
+    -- overrides operand a while it runs.
+    fast_a_fp32 <= probe_a when probe_active = '1' and probe_fast = '1' else fp_a;
+    fast_b_fp32 <= c_fma_b when probe_active = '1' and probe_fast = '1' else fp_b;
+    fast_c_fp32 <= c_fma_c when probe_active = '1' and probe_fast = '1' else fp_c;
+
+    fast_in.mpy_a        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_a_fp32));
+    fast_in.mpy_b        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_b_fp32));
+    fast_in.add_a        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_c_fp32));
+    fast_in.is_requested <= '1';
+
+    u_fast_fma : entity work.multiply_add(fast_hfloat)
+    generic map (g_floatref => hfloat_fp32_zero)
+    port map (clock => clock, mpya_in => fast_in, mpya_out => fast_out);
+
+    fast_result <= hfloat_to_fp32(to_hfloat(get_mpya_result(fast_out), hfloat_fp32_zero));
 
     gen_native : if g_has_native_fp generate
         native_in.mpy_a        <= probe_a when probe_active = '1' and probe_native = '1' else fp_a;
@@ -243,6 +281,15 @@ begin
                     if probe_trig_s /= probe_seen_s then
                         probe_seen_s <= probe_trig_s;
                         probe_native <= '0';
+                        probe_fast   <= '0';
+                        probe_a      <= c_fma_a0;
+                        probe_active <= '1';
+                        probe_wait   <= 255;
+                        probe_state  <= P_SETTLE;
+                    elsif probe_trig_f /= probe_seen_f then
+                        probe_seen_f <= probe_trig_f;
+                        probe_native <= '0';
+                        probe_fast   <= '1';
                         probe_a      <= c_fma_a0;
                         probe_active <= '1';
                         probe_wait   <= 255;
@@ -250,6 +297,7 @@ begin
                     elsif probe_trig_n /= probe_seen_n then
                         probe_seen_n <= probe_trig_n;
                         probe_native <= '1';
+                        probe_fast   <= '0';
                         probe_a      <= c_fma_a0;
                         probe_active <= '1';
                         probe_wait   <= 255;
@@ -268,12 +316,16 @@ begin
                 when P_MEASURE =>
                     if probe_native = '1' then
                         measured := native_result;
+                    elsif probe_fast = '1' then
+                        measured := fast_result;
                     else
                         measured := soft_result;
                     end if;
                     if measured = c_fma_r1 then
                         if probe_native = '1' then
                             nat_latency <= std_logic_vector(to_unsigned(probe_count, 32));
+                        elsif probe_fast = '1' then
+                            fast_latency <= std_logic_vector(to_unsigned(probe_count, 32));
                         else
                             soft_latency <= std_logic_vector(to_unsigned(probe_count, 32));
                         end if;
@@ -281,6 +333,8 @@ begin
                     elsif probe_count = 255 then
                         if probe_native = '1' then
                             nat_latency <= x"FFFFFFFF";
+                        elsif probe_fast = '1' then
+                            fast_latency <= x"FFFFFFFF";
                         else
                             soft_latency <= x"FFFFFFFF";
                         end if;
@@ -298,6 +352,7 @@ begin
                 probe_state  <= P_IDLE;
                 probe_active <= '0';
                 probe_seen_s <= probe_trig_s;
+                probe_seen_f <= probe_trig_f;
                 probe_seen_n <= probe_trig_n;
             end if;
         end if;

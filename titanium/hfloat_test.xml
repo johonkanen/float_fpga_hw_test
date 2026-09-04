@@ -22,6 +22,8 @@
         <efx:design_file name="../source/hVHDL_floating_point/vhdl2008/float_to_real_conversions_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../source/hVHDL_floating_point/vhdl2008/multiply_add_entity.vhd" version="default" library="default" />
         <efx:design_file name="../source/hVHDL_floating_point/vhdl2008/multiply_add_arch_hfloat.vhd" version="default" library="default" />
+        <efx:design_file name="../source/hVHDL_floating_point/vhdl2008/fast_hfloat_pkg.vhd" version="default" library="default" />
+        <efx:design_file name="../source/hVHDL_floating_point/vhdl2008/multiply_add_arch_fast_hfloat.vhd" version="default" library="default" />
         <efx:design_file name="../source/hVHDL_floating_point/vhdl2008/altera/multiply_add_arch_agilex.vhd" version="default" library="default" />
         <efx:design_file name="../fp32_hfloat_pkg.vhd" version="default" library="default" />
         <efx:design_file name="../float_to_fixed.vhd" version="default" library="default" />

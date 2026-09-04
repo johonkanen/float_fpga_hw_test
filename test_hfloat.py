@@ -20,9 +20,12 @@ Register map (see top_test_hfloat.vhd):
     16 FMA operand a  (IEEE-754 binary32)           RW
     17 FMA operand b                                RW
     18 FMA operand c                                RW
-    19 FMA result a*b+c  - hVHDL soft multiply_add  RO
+    19 FMA result a*b+c  - multiply_add(hfloat)      RO
     20 soft FMA pipeline latency, clock edges       RO
     21 write -> run the soft FMA latency probe      WO
+    22 FMA result a*b+c  - multiply_add(fast_hfloat) RO
+    23 fast FMA pipeline latency, clock edges       RO
+    27 write -> run the fast FMA latency probe      WO
     24 FMA result a*b+c  - Agilex native_fp32       RO   (0 on Titanium)
     25 native FMA pipeline latency                  RO   (0 on Titanium)
     26 write -> run the native FMA latency probe    WO
@@ -148,6 +151,15 @@ def test_fma_soft(u, r):
         r.check(f"{a} * {b} + {c}", close_enough(got, exp), f"got {got}, expected {exp}")
 
 
+def test_fma_fast(u, r):
+    print("fast FMA  (addr 16-18 in, 22 out, hVHDL multiply_add(fast_hfloat))   a*b + c")
+    for a, b, c in FMA_CASES:
+        _fma(u, a, b, c)
+        got = i2f(u.read(22))
+        exp = a * b + c
+        r.check(f"{a} * {b} + {c}", close_enough(got, exp), f"got {got}, expected {exp}")
+
+
 def test_fma_native(u, r):
     print("native FMA  (addr 24, Agilex native_fp32)   a*b + c")
     _fma(u, 1.0, 1.0, 0.0)
@@ -162,11 +174,15 @@ def test_fma_native(u, r):
 
 
 def test_fma_latency(u, r):
-    print("FMA pipeline latency probes (addr 20/21 soft, 25/26 native)")
+    print("FMA pipeline latency probes (addr 20/21 soft, 23/27 fast, 25/26 native)")
     u.write(21, 1)
     time.sleep(0.05)
     lat = [u.read(20) for _ in range(3)]
     r.check("soft latency stable & sane", len(set(lat)) == 1 and 0 < lat[0] < 64, f"{lat}")
+    u.write(27, 1)
+    time.sleep(0.05)
+    flat = [u.read(23) for _ in range(3)]
+    r.check("fast latency stable & sane", len(set(flat)) == 1 and 0 < flat[0] < 64, f"{flat}")
     u.write(26, 1)
     time.sleep(0.05)
     nlat = [u.read(25) for _ in range(3)]
@@ -204,7 +220,7 @@ def main():
     r = Runner()
     try:
         for t in (test_link, test_loopback, test_counter,
-                  test_fma_soft, test_fma_native, test_fma_latency,
+                  test_fma_soft, test_fma_fast, test_fma_native, test_fma_latency,
                   test_float_to_fixed):
             t(u, r)
             print()

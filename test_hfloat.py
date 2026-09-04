@@ -4,8 +4,8 @@ test_hfloat.py - exercise the hfloat_test UART register interface.
 
     python test_hfloat.py [PORT] [BAUD]
 
-Defaults: COM8 4.8e6 (Titanium).  For the AXC3000 (Agilex) build use
-4.0e6:  python test_hfloat.py COM6 4e6
+Defaults: COM8 4.8e6 (Titanium).  Both boards run the core at 120 MHz
+and the link at the same 4.8 MBaud:  python test_hfloat.py COM6 4.8e6
 
 Self-contained - needs only pyserial (`pip install pyserial`).  Speaks the
 fpga_communication serial protocol directly: 1-byte command, 2-byte
@@ -32,6 +32,9 @@ Register map (see top_test_hfloat.vhd):
     32 float->fixed input  (IEEE-754 binary32)      RW
     33 float->fixed radix   (default 10)            RW
     34 float->fixed result = trunc(x * 2**radix)    RO   (signed)
+    40 divide operand a  (IEEE-754 binary32)        RW
+    41 divide operand b  (IEEE-754 binary32)        RW
+    42 divide result a/b - float_divide(lut)        RO
 
 Exit status: 0 = all passed, 1 = one or more failed.
 """
@@ -208,6 +211,20 @@ def test_float_to_fixed(u, r):
     u.write(33, 10)
 
 
+def test_divide(u, r):
+    print("divide  (addr 40 a, 41 b, 42 result = a/b, float_divide(lut))")
+    for a, b in [(1.0, 1.0), (8.0, 2.0), (-8.0, 2.0), (8.0, -2.0), (-8.0, -2.0),
+                 (1.0, 8.0), (3.0, 7.0), (22.0, 7.0), (1.0e6, 1.0e-6),
+                 (1.0e-6, 1.0e6), (0.1, 0.3), (-123.456, 78.9)]:
+        u.write(40, f2i(a))
+        u.write(41, f2i(b))
+        time.sleep(0.02)
+        got = i2f(u.read(42))
+        exp = a / b
+        rel_err = abs(got - exp) / max(abs(exp), 1e-30)
+        r.check(f"{a:+.6g} / {b:+.6g}", rel_err < 2e-3, f"got {got:.6g}, expected {exp:.6g}, rel_err {rel_err:.2e}")
+
+
 def main():
     port = sys.argv[1] if len(sys.argv) > 1 else "COM8"
     baud = eval(sys.argv[2]) if len(sys.argv) > 2 else 4.8e6
@@ -221,7 +238,7 @@ def main():
     try:
         for t in (test_link, test_loopback, test_counter,
                   test_fma_soft, test_fma_fast, test_fma_native, test_fma_latency,
-                  test_float_to_fixed):
+                  test_float_to_fixed, test_divide):
             t(u, r)
             print()
     except (TimeoutError, serial.SerialException) as e:

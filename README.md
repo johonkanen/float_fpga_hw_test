@@ -57,7 +57,7 @@ steps yourself:
 
 ```
 quartus_sh   -t build_agilex.tcl
-qsys-generate ip/pll_100/pll_100.ip         --synthesis=VHDL --part=A3CY100BM16AE7S
+qsys-generate ip/pll_120/pll_120.ip         --synthesis=VHDL --part=A3CY100BM16AE7S
 qsys-generate ip/native_fp32/native_fp32.ip --synthesis=VHDL --part=A3CY100BM16AE7S
 quartus_sh --flow compile hfloat_test
 ```

@@ -26,6 +26,10 @@
 --   33 : float->fixed radix   (default 10)               RW
 --   34 : float->fixed result  = trunc(x * 2**radix)      RO   (signed)
 --
+--   40 : divide operand a  (IEEE-754 binary32)            RW
+--   41 : divide operand b  (IEEE-754 binary32)            RW
+--   42 : divide result a/b - float_divide(lut)            RO
+--
 -- g_has_native_fp enables the multiply_add(agilex) / native_fp32 path;
 -- leave it false on devices without the hard float DSP (e.g. Titanium).
 ------------------------------------------------------------------------
@@ -53,6 +57,7 @@ architecture rtl of top_test_hfloat is
     use work.float_typedefs_generic_pkg.all;
     use work.fp32_hfloat_pkg.all;
     use work.float_to_fixed_pkg.all;
+    use work.float_divide_pkg.all;
 
     -- power-on reset stretch so the UART starts from a known state
     signal por_counter  : natural range 0 to 1_048_575 := 1_048_575;
@@ -145,6 +150,15 @@ architecture rtl of top_test_hfloat is
                           := std_logic_vector(to_unsigned(c_conv_radix, 32));
     signal fixed_conv_out : std_logic_vector(31 downto 0) := (others => '0');
 
+    -- divide
+    constant div_ref : float_divide_typeref := create_float_divide_typeref(hfloat_fp32_zero);
+    signal   div_in  : div_ref.divide_in'subtype  := div_ref.divide_in;
+    signal   div_out : div_ref.divide_out'subtype := div_ref.divide_out;
+
+    signal div_a_fp32   : std_logic_vector(31 downto 0) := (others => '0');
+    signal div_b_fp32   : std_logic_vector(31 downto 0) := (others => '0');
+    signal div_result   : std_logic_vector(31 downto 0) := (others => '0');
+
 begin
 
 ------------------------------------------------------------------------
@@ -202,6 +216,11 @@ begin
             connect_data_to_address(bus_from_communications, bus_from_top, 33, conv_radix);
             connect_read_only_data_to_address(bus_from_communications, bus_from_top, 34, fixed_conv_out);
 
+            -- divide
+            connect_data_to_address(bus_from_communications, bus_from_top, 40, div_a_fp32);
+            connect_data_to_address(bus_from_communications, bus_from_top, 41, div_b_fp32);
+            connect_read_only_data_to_address(bus_from_communications, bus_from_top, 42, div_result);
+
             bus_to_communications <= bus_from_top;
 
             if system_reset = '1' then
@@ -212,6 +231,8 @@ begin
                 fp_c                  <= (others => '0');
                 fp_conv_in            <= (others => '0');
                 conv_radix            <= std_logic_vector(to_unsigned(c_conv_radix, 32));
+                div_a_fp32            <= (others => '0');
+                div_b_fp32            <= (others => '0');
                 bus_to_communications <= init_fpga_interconnect;
             end if;
         end if;
@@ -406,5 +427,29 @@ begin
             end if;
         end if;
     end process float_to_fixed;
+
+------------------------------------------------------------------------
+    u_float_divide : entity work.float_divide
+        generic map (floatref => hfloat_fp32_zero)
+        port map (
+            clock      => clock,
+            divide_in  => div_in,
+            divide_out => div_out
+        );
+
+    divide : process (clock) is
+    begin
+        if rising_edge(clock) then
+            request_divide(div_in,
+                to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(div_a_fp32)),
+                to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(div_b_fp32)));
+            if float_divide_is_ready(div_out) then
+                div_result <= hfloat_to_fp32(to_hfloat(get_divide_result(div_out), hfloat_fp32_zero));
+            end if;
+            if system_reset = '1' then
+                div_result <= (others => '0');
+            end if;
+        end if;
+    end process divide;
 
 end architecture rtl;

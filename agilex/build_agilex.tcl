@@ -27,7 +27,7 @@
 # Program (cable INDEX, not name):
 #     quartus_pgm -c 1 -m jtag -o "p;output_files/hfloat_test.sof"
 #
-# Talk to it:  python ../test_hfloat.py COM<x> 4e6
+# Talk to it:  python ../test_hfloat.py COM<x> 4.8e6
 # ------------------------------------------------------------------------
 
 package require ::quartus::project
@@ -89,7 +89,11 @@ set_global_assignment -name VHDL_FILE $FP/multiply_add_arch_fast_hfloat.vhd
 set_global_assignment -name VHDL_FILE $FP/altera/multiply_add_arch_agilex.vhd
 set_global_assignment -name VHDL_FILE $FP/float_to_fixed.vhd
 
+# hVHDL_fixed_point (just the reciprocal lut, for float_divide below)
+set_global_assignment -name VHDL_FILE $repo_root/source/hVHDL_fixed_point/lut_interpolation/lut_reciprocal_pkg.vhd
+
 set_global_assignment -name VHDL_FILE $repo_root/fp32_hfloat_pkg.vhd
+set_global_assignment -name VHDL_FILE $repo_root/float_divide.vhd
 set_global_assignment -name VHDL_FILE $repo_root/top_test_hfloat.vhd
 set_global_assignment -name VHDL_FILE $this_file_path/hfloat_test_agilex.vhd
 

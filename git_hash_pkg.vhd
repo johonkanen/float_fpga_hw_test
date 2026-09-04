@@ -3,5 +3,5 @@ library ieee;
 
 package git_hash_pkg is
 
-    constant git_hash : std_logic_vector(31 downto 0) := x"0eab6e3b";
+    constant git_hash : std_logic_vector(31 downto 0) := x"0add2b39";
 end package;

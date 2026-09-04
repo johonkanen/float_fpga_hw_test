@@ -87,6 +87,16 @@ architecture rtl of top_test_hfloat is
     signal fast_result : std_logic_vector(31 downto 0) := (others => '0');
     signal fast_a_fp32, fast_b_fp32, fast_c_fp32 : std_logic_vector(31 downto 0) := (others => '0');
 
+    -- registered hfloat operands / result: the fp32<->hfloat conversion glue
+    -- sits between these registers and the raw fp32 / fp32 output, so the fast
+    -- latency probe brackets exactly the native hfloat core (it subtracts the
+    -- two boundary registers below).
+    signal fast_hf_a   : soft_ref.mpya_in.mpy_a'subtype   := (others => '0');
+    signal fast_hf_b   : soft_ref.mpya_in.mpy_b'subtype   := (others => '0');
+    signal fast_hf_c   : soft_ref.mpya_in.add_a'subtype   := (others => '0');
+    signal fast_hf_res : soft_ref.mpya_out.result'subtype := (others => '0');
+    constant c_fast_boundary_regs : natural := 2;
+
     -- native path: multiply_add(agilex) / native_fp32, plain fp32
     constant nat_ref  : mpya_subtype_record := create_mpya_typeref;
     signal native_in  : nat_ref.mpya_in'subtype  := nat_ref.mpya_in;
@@ -247,16 +257,29 @@ begin
     fast_b_fp32 <= c_fma_b when probe_active = '1' and probe_fast = '1' else fp_b;
     fast_c_fp32 <= c_fma_c when probe_active = '1' and probe_fast = '1' else fp_c;
 
-    fast_in.mpy_a        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_a_fp32));
-    fast_in.mpy_b        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_b_fp32));
-    fast_in.add_a        <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_c_fp32));
+    -- boundary registers: fp32 -> hfloat on the way in, hfloat -> fp32 on the
+    -- way out, both isolated between flops so the conversion glue is off the
+    -- FMA critical path and the probe measures the hfloat core alone
+    fast_hfloat_boundary : process (clock) is
+    begin
+        if rising_edge(clock) then
+            fast_hf_a   <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_a_fp32));
+            fast_hf_b   <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_b_fp32));
+            fast_hf_c   <= to_std_logic(work.fp32_hfloat_pkg.fp32_to_hfloat(fast_c_fp32));
+            fast_hf_res <= get_mpya_result(fast_out);
+        end if;
+    end process fast_hfloat_boundary;
+
+    fast_in.mpy_a        <= fast_hf_a;
+    fast_in.mpy_b        <= fast_hf_b;
+    fast_in.add_a        <= fast_hf_c;
     fast_in.is_requested <= '1';
 
     u_fast_fma : entity work.multiply_add(fast_hfloat)
     generic map (g_floatref => hfloat_fp32_zero)
     port map (clock => clock, mpya_in => fast_in, mpya_out => fast_out);
 
-    fast_result <= hfloat_to_fp32(to_hfloat(get_mpya_result(fast_out), hfloat_fp32_zero));
+    fast_result <= hfloat_to_fp32(to_hfloat(fast_hf_res, hfloat_fp32_zero));
 
     gen_native : if g_has_native_fp generate
         native_in.mpy_a        <= probe_a when probe_active = '1' and probe_native = '1' else fp_a;
@@ -325,7 +348,9 @@ begin
                         if probe_native = '1' then
                             nat_latency <= std_logic_vector(to_unsigned(probe_count, 32));
                         elsif probe_fast = '1' then
-                            fast_latency <= std_logic_vector(to_unsigned(probe_count, 32));
+                            -- subtract the fp32<->hfloat boundary registers so the
+                            -- reading is the native hfloat core latency alone
+                            fast_latency <= std_logic_vector(to_unsigned(probe_count - c_fast_boundary_regs, 32));
                         else
                             soft_latency <= std_logic_vector(to_unsigned(probe_count, 32));
                         end if;

@@ -15,6 +15,8 @@ real silicon over a serial link:
 * **`multiply_add(agilex)` / `native_fp32`** — the Altera hard float DSP
   (Agilex build only, 3 clock edges), for a side-by-side comparison
 * **`float_to_fixed`** — the denormaliser `trunc(x · 2^radix)` converter
+* **`float_divide`** — `a/b` via a piecewise-linear 1/x lookup table from
+  the `hVHDL_fixed_point` submodule (pulled in by `hVHDL_floating_point`)
 
 Two builds share one `top_test_hfloat`:
 
@@ -34,10 +36,10 @@ rate the host FT4232H generates exactly, so there is no baud skew.
 |------|--------|
 | `source/hVHDL_uart` | `hVHDL/hVHDL_uart` |
 | `source/hVHDL_fpga_interconnect` | `hVHDL/hVHDL_fpga_interconnect` |
-| `source/hVHDL_floating_point` | `hVHDL/hVHDL_floating_point` |
+| `source/hVHDL_floating_point` | `hVHDL/hVHDL_floating_point` (itself pulls in `hVHDL/hVHDL_fixed_point` as a nested submodule, for `float_divide`'s reciprocal lookup table) |
 | `source/fpga_communication/*.vhd` | vendored from `johonkanen/fpga_communication` |
 
-First checkout: `git submodule update --init`.
+First checkout: `git submodule update --init --recursive`.
 
 ## Build & program
 
@@ -99,6 +101,8 @@ python test_hfloat.py COM8 4.8e6    # Titanium
 | 32 | float→fixed input — IEEE-754 binary32 (R/W) |
 | 33 | float→fixed radix (R/W, default 10) |
 | 34 | float→fixed result = `trunc(x · 2^radix)` (RO, signed) |
+| 40 / 41 | divide operands a / b — IEEE-754 binary32 (R/W) |
+| 42 | divide result `a/b` — `float_divide` (RO) |
 
 FMA operands / results and the addr 32 input are raw binary32 bit
 patterns (`struct.pack('!f', x)`).

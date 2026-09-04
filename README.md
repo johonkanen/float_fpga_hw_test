@@ -123,6 +123,7 @@ result-registered:
 | `multiply_add(hfloat)` | 8 | sign-magnitude adder + one barrel shifter |
 | `multiply_add(fast_hfloat)` | 4 | one-hot align multiply, fused magnitude/normalise |
 | `native_fp32` (Agilex) | 3 | hard-float DSP |
+| `float_divide` | 4 | fixed by design (no on-chip probe); reciprocal lut + one multiply |
 
 Both boards close timing at a 120 MHz core clock:
 
@@ -134,6 +135,25 @@ Both boards close timing at a 120 MHz core clock:
 The `fast_hfloat` datapath carries no register power-up values so the
 Agilex Hyper-Retimer can move them; `multiply_add(fast_hfloat)` bit-matches
 `multiply_add(hfloat)` on every register test on both boards.
+
+### Resource usage
+
+Read straight off each toolchain's per-entity utilization report
+(Efinity's `hfloat_test.hier_util.rpt`, Quartus's "Fitter Resource
+Utilization by Entity" in `hfloat_test.fit.rpt`):
+
+| module | Titanium: xlr / hard DSP / flip-flops | Agilex: ALMs / ALUTs / registers / DSP blocks |
+|---|---:|---:|
+| `multiply_add(hfloat)` | 739 / 4 / 171 | 284.0 / 492 / 404 / 1 |
+| `multiply_add(fast_hfloat)` | 716 / 8 / 98 | 367.4 / 640 / 272 / 3 |
+| `float_divide` | 540 / 3 / 48 | 117.2 / 155 / 160 / 2 |
+| `float_to_fixed` | 286.5 / 0 / 42 | 68.3 / 166 / 75 / 0 |
+
+`float_divide` lands lighter than either FMA architecture on both
+targets - its `m×16`-bit multiply and the lut's own interpolation MAC
+are its only real DSP consumers - but costs more than `float_to_fixed`
+since it also carries the reciprocal lookup table logic on top of a
+multiply.
 
 ## Notes
 

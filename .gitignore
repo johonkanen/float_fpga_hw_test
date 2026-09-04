@@ -1,0 +1,44 @@
+# Quartus build output
+dni/
+qdb/
+db/
+incremental_db/
+output_files/
+*.qdf
+uart_bringup.qsf
+uart_bringup.qpf
+*.rpt
+*.summary
+*.pin
+*.sof
+*.sld
+*.qws
+serv_req_info.txt
+
+# generated IP HDL - keep the ip/<name>/<name>.ip source, drop the generated tree
+ip/*/*/
+
+# python
+__pycache__/
+*.pyc
+
+# Quartus (agilex/)
+agilex/output_files/
+agilex/db/
+agilex/incremental_db/
+agilex/qdb/
+agilex/*.qsf
+agilex/*.qpf
+agilex/*.rpt
+agilex/*.summary
+agilex/*.pin
+agilex/*.sof
+agilex/ip/*/*/
+
+# Efinity (titanium/)
+titanium/outflow/
+titanium/work_*/
+titanium/*.log
+titanium/build.log
+
+# git hash is generated

@@ -62,6 +62,8 @@ set_global_assignment -name OPTIMIZATION_MODE BALANCED
 set_global_assignment -name BOARD default
 set_global_assignment -name USE_CONF_DONE SDM_IO16
 set_global_assignment -name USE_INIT_DONE SDM_IO0
+set_global_assignment -name FLOW_ENABLE_HYPER_RETIMER_FAST_FORWARD ON
+set_global_assignment -name FLOW_ENABLE_INTERACTIVE_TIMING_ANALYZER OFF
 
 # ------------------------------------------------------------ source set
 set_global_assignment -name VHDL_FILE $repo_root/source/hVHDL_fpga_interconnect/fpga_interconnect_generic_pkg.vhd

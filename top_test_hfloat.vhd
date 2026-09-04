@@ -91,10 +91,12 @@ architecture rtl of top_test_hfloat is
     -- sits between these registers and the raw fp32 / fp32 output, so the fast
     -- latency probe brackets exactly the native hfloat core (it subtracts the
     -- two boundary registers below).
-    signal fast_hf_a   : soft_ref.mpya_in.mpy_a'subtype   := (others => '0');
-    signal fast_hf_b   : soft_ref.mpya_in.mpy_b'subtype   := (others => '0');
-    signal fast_hf_c   : soft_ref.mpya_in.add_a'subtype   := (others => '0');
-    signal fast_hf_res : soft_ref.mpya_out.result'subtype := (others => '0');
+    -- no power-up values: keeps the Agilex Hyper-Retimer free to move these
+    -- across the fp32<->hfloat conversion logic
+    signal fast_hf_a   : soft_ref.mpya_in.mpy_a'subtype;
+    signal fast_hf_b   : soft_ref.mpya_in.mpy_b'subtype;
+    signal fast_hf_c   : soft_ref.mpya_in.add_a'subtype;
+    signal fast_hf_res : soft_ref.mpya_out.result'subtype;
     constant c_fast_boundary_regs : natural := 2;
 
     -- native path: multiply_add(agilex) / native_fp32, plain fp32

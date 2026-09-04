@@ -87,9 +87,9 @@ set_global_assignment -name VHDL_FILE $FP/multiply_add_arch_hfloat.vhd
 set_global_assignment -name VHDL_FILE $FP/fast_hfloat_pkg.vhd
 set_global_assignment -name VHDL_FILE $FP/multiply_add_arch_fast_hfloat.vhd
 set_global_assignment -name VHDL_FILE $FP/altera/multiply_add_arch_agilex.vhd
+set_global_assignment -name VHDL_FILE $FP/float_to_fixed.vhd
 
 set_global_assignment -name VHDL_FILE $repo_root/fp32_hfloat_pkg.vhd
-set_global_assignment -name VHDL_FILE $repo_root/float_to_fixed.vhd
 set_global_assignment -name VHDL_FILE $repo_root/top_test_hfloat.vhd
 set_global_assignment -name VHDL_FILE $this_file_path/hfloat_test_agilex.vhd
 

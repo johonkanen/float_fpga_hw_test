@@ -8,9 +8,9 @@
 -- separate fp32_to_hfloat glue function.  The hfloat reference type and
 -- the pipeline depth are entity generics (floatref defaults to hfloat32).
 --
---   FP=../source/hVHDL_floating_point
---   nvc --std=2019 -a $FP/vhdl2008/float_typedefs_generic_pkg.vhd \
---                     ../float_to_fixed.vhd sim/float_to_fixed_tb.vhd
+--   FP=../source/hVHDL_floating_point/vhdl2008
+--   nvc --std=2019 -a $FP/float_typedefs_generic_pkg.vhd \
+--                     $FP/float_to_fixed.vhd sim/float_to_fixed_tb.vhd
 --   nvc --std=2019 -e float_to_fixed_tb -r
 
 library ieee;

@@ -89,11 +89,13 @@ set_global_assignment -name VHDL_FILE $FP/multiply_add_arch_fast_hfloat.vhd
 set_global_assignment -name VHDL_FILE $FP/altera/multiply_add_arch_agilex.vhd
 set_global_assignment -name VHDL_FILE $FP/float_to_fixed.vhd
 
-# hVHDL_fixed_point (just the reciprocal lut, for float_divide below)
-set_global_assignment -name VHDL_FILE $repo_root/source/hVHDL_fixed_point/lut_interpolation/lut_reciprocal_pkg.vhd
+# hVHDL_fixed_point, nested under hVHDL_floating_point as its own submodule
+# (just the reciprocal lut, for float_divide below)
+set FX $repo_root/source/hVHDL_floating_point/source/hVHDL_fixed_point
+set_global_assignment -name VHDL_FILE $FX/lut_interpolation/lut_reciprocal_pkg.vhd
+set_global_assignment -name VHDL_FILE $FP/float_divide.vhd
 
 set_global_assignment -name VHDL_FILE $repo_root/fp32_hfloat_pkg.vhd
-set_global_assignment -name VHDL_FILE $repo_root/float_divide.vhd
 set_global_assignment -name VHDL_FILE $repo_root/top_test_hfloat.vhd
 set_global_assignment -name VHDL_FILE $this_file_path/hfloat_test_agilex.vhd
 

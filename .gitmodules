@@ -7,6 +7,3 @@
 [submodule "source/hVHDL_uart"]
 	path = source/hVHDL_uart
 	url = https://github.com/hVHDL/hVHDL_uart.git
-[submodule "source/hVHDL_fixed_point"]
-	path = source/hVHDL_fixed_point
-	url = https://github.com/hVHDL/hVHDL_fixed_point.git

@@ -42,14 +42,22 @@ First checkout: `git submodule update --init`.
 ### Agilex (from `agilex/`)
 
 ```
+quartus_sh -t build_agilex.tcl compile
+quartus_pgm -c 1 -m jtag -o "p;output_files/hfloat_test.sof"
+```
+
+`build_agilex.tcl` is a Tcl *project* script - run it with `-t`, not
+`quartus_sh --flow compile build_agilex.tcl` (that fails with error 16368
+looking for an entity named `build_agilex`; the project it builds is
+`hfloat_test`). The `compile` argument generates the IP and runs the full
+flow; without it the script just writes the project and you drive the
+steps yourself:
+
+```
 quartus_sh   -t build_agilex.tcl
 qsys-generate ip/pll_100/pll_100.ip         --synthesis=VHDL --part=A3CY100BM16AE7S
 qsys-generate ip/native_fp32/native_fp32.ip --synthesis=VHDL --part=A3CY100BM16AE7S
-quartus_syn hfloat_test
-quartus_fit hfloat_test
-quartus_sta hfloat_test
-quartus_asm hfloat_test
-quartus_pgm -c 1 -m jtag -o "p;output_files/hfloat_test.sof"
+quartus_sh --flow compile hfloat_test
 ```
 
 ### Titanium (from `titanium/`)

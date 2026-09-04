@@ -7,8 +7,16 @@
 #
 # First checkout:  git submodule update --init
 #
-# Build (run every command from this directory):
-#     quartus_sh   -t build_agilex.tcl
+# Build everything in one step (run from this directory):
+#     quartus_sh -t build_agilex.tcl compile
+#
+# This is a Tcl PROJECT script - it must be run with "-t", NOT
+# "quartus_sh --flow compile build_agilex.tcl" (that treats "build_agilex"
+# as a project/entity name and fails with error 16368).  The project it
+# builds is called "hfloat_test".
+#
+# Or drive the steps yourself:
+#     quartus_sh   -t build_agilex.tcl            ;# (re)write the project
 #     qsys-generate ip/pll_100/pll_100.ip         --synthesis=VHDL --part=A3CY100BM16AE7S
 #     qsys-generate ip/native_fp32/native_fp32.ip --synthesis=VHDL --part=A3CY100BM16AE7S
 #     quartus_syn hfloat_test
@@ -19,7 +27,7 @@
 # Program (cable INDEX, not name):
 #     quartus_pgm -c 1 -m jtag -o "p;output_files/hfloat_test.sof"
 #
-# Talk to it:  python ../test_hfloat.py COM<x> 4.8e6
+# Talk to it:  python ../test_hfloat.py COM<x> 4e6
 # ------------------------------------------------------------------------
 
 package require ::quartus::project
@@ -104,4 +112,36 @@ set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON   -to reset_reset_n -enti
 set_instance_assignment -name CURRENT_STRENGTH_NEW 6MA   -to uart_txd      -entity hfloat_test_top
 
 export_assignments
+
+# ---------------------------------------------------------------- compile
+# "quartus_sh -t build_agilex.tcl compile" also generates the IP and runs
+# the full compile flow.  Plain "-t build_agilex.tcl" just (re)writes the
+# project so you can drive quartus_syn / fit / sta / asm yourself.
+if {[lsearch -exact $quartus(args) "compile"] >= 0} {
+
+    set qgen "qsys-generate"
+    if {[auto_execok $qgen] eq ""} {
+        set qgen [file normalize [file join $quartus(binpath) .. sopc_builder bin qsys-generate]]
+    }
+
+    foreach ip {pll_100 native_fp32} {
+        set ip_file [file join $this_file_path ip $ip $ip.ip]
+        puts "### qsys-generate $ip"
+        # -ignorestderr: qsys-generate prints its licence banner to stderr,
+        # which Tcl exec would otherwise raise as an error on a clean run
+        if {[catch {exec -ignorestderr $qgen $ip_file \
+                        --synthesis=VHDL --part=A3CY100BM16AE7S} msg]} {
+            puts $msg
+            puts "ERROR: qsys-generate $ip failed"
+            exit 1
+        }
+    }
+
+    package require ::quartus::flow
+    if {[catch {execute_flow -compile} msg]} {
+        puts "ERROR: compile flow failed: $msg"
+        exit 1
+    }
+}
+
 if {$need_to_close_project} { project_close }

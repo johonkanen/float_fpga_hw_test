@@ -14,8 +14,8 @@ refer to the applicable agreement for further details, at
 https://fpgasoftware.intel.com/eula.-->
 <ipxact:component xmlns:altera="http://www.altera.com/XMLSchema/IPXact2014/extensions" xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014">
   <ipxact:vendor>Altera</ipxact:vendor>
-  <ipxact:library>pll_100</ipxact:library>
-  <ipxact:name>pll_100</ipxact:name>
+  <ipxact:library>pll_120</ipxact:library>
+  <ipxact:name>pll_120</ipxact:name>
   <ipxact:version>21.0.0</ipxact:version>
   <ipxact:busInterfaces>
     <ipxact:busInterface>
@@ -182,7 +182,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:parameter parameterId="clockRate" type="longint">
           <ipxact:name>clockRate</ipxact:name>
           <ipxact:displayName>Clock rate</ipxact:displayName>
-          <ipxact:value>100000000</ipxact:value>
+          <ipxact:value>120000000</ipxact:value>
         </ipxact:parameter>
         <ipxact:parameter parameterId="clockRateKnown" type="bit">
           <ipxact:name>clockRateKnown</ipxact:name>
@@ -283,7 +283,7 @@ https://fpgasoftware.intel.com/eula.-->
   <ipxact:vendorExtensions>
     <altera:entity_info>
       <ipxact:vendor>Altera</ipxact:vendor>
-      <ipxact:library>pll_100</ipxact:library>
+      <ipxact:library>pll_120</ipxact:library>
       <ipxact:name>altera_iopll</ipxact:name>
       <ipxact:version>21.0.0</ipxact:version>
     </altera:entity_info>
@@ -1047,7 +1047,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:parameter parameterId="gui_output_clock_frequency0" type="real">
           <ipxact:name>gui_output_clock_frequency0</ipxact:name>
           <ipxact:displayName>Desired Frequency</ipxact:displayName>
-          <ipxact:value>100.0</ipxact:value>
+          <ipxact:value>120.0</ipxact:value>
         </ipxact:parameter>
         <ipxact:parameter parameterId="gui_output_clock_frequency1" type="real">
           <ipxact:name>gui_output_clock_frequency1</ipxact:name>
@@ -1670,7 +1670,7 @@ https://fpgasoftware.intel.com/eula.-->
                 &lt;consumedSystemInfos&gt;
                     &lt;entry&gt;
                         &lt;key&gt;CLOCK_RATE&lt;/key&gt;
-                        &lt;value&gt;100000000&lt;/value&gt;
+                        &lt;value&gt;120000000&lt;/value&gt;
                     &lt;/entry&gt;
                 &lt;/consumedSystemInfos&gt;
             &lt;/value&gt;
@@ -1691,16 +1691,16 @@ https://fpgasoftware.intel.com/eula.-->
       </ipxact:parameters>
     </altera:altera_system_parameters>
     <altera:altera_interface_boundary>
-      <altera:interface_mapping altera:name="locked" altera:internal="pll_100.locked" altera:type="conduit" altera:dir="end">
+      <altera:interface_mapping altera:name="locked" altera:internal="pll_120.locked" altera:type="conduit" altera:dir="end">
         <altera:port_mapping altera:name="locked" altera:internal="locked"></altera:port_mapping>
       </altera:interface_mapping>
-      <altera:interface_mapping altera:name="outclk0" altera:internal="pll_100.outclk0" altera:type="clock" altera:dir="start">
+      <altera:interface_mapping altera:name="outclk0" altera:internal="pll_120.outclk0" altera:type="clock" altera:dir="start">
         <altera:port_mapping altera:name="outclk_0" altera:internal="outclk_0"></altera:port_mapping>
       </altera:interface_mapping>
-      <altera:interface_mapping altera:name="refclk" altera:internal="pll_100.refclk" altera:type="clock" altera:dir="end">
+      <altera:interface_mapping altera:name="refclk" altera:internal="pll_120.refclk" altera:type="clock" altera:dir="end">
         <altera:port_mapping altera:name="refclk" altera:internal="refclk"></altera:port_mapping>
       </altera:interface_mapping>
-      <altera:interface_mapping altera:name="reset" altera:internal="pll_100.reset" altera:type="reset" altera:dir="end">
+      <altera:interface_mapping altera:name="reset" altera:internal="pll_120.reset" altera:type="reset" altera:dir="end">
         <altera:port_mapping altera:name="rst" altera:internal="rst"></altera:port_mapping>
       </altera:interface_mapping>
     </altera:altera_interface_boundary>

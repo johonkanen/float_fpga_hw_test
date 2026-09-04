@@ -17,7 +17,7 @@
 #
 # Or drive the steps yourself:
 #     quartus_sh   -t build_agilex.tcl            ;# (re)write the project
-#     qsys-generate ip/pll_100/pll_100.ip         --synthesis=VHDL --part=A3CY100BM16AE7S
+#     qsys-generate ip/pll_120/pll_120.ip         --synthesis=VHDL --part=A3CY100BM16AE7S
 #     qsys-generate ip/native_fp32/native_fp32.ip --synthesis=VHDL --part=A3CY100BM16AE7S
 #     quartus_syn hfloat_test
 #     quartus_fit hfloat_test
@@ -94,7 +94,7 @@ set_global_assignment -name VHDL_FILE $repo_root/top_test_hfloat.vhd
 set_global_assignment -name VHDL_FILE $this_file_path/hfloat_test_agilex.vhd
 
 # ------------------------------------------------------------------- IP
-set_global_assignment -name IP_FILE $this_file_path/ip/pll_100/pll_100.ip
+set_global_assignment -name IP_FILE $this_file_path/ip/pll_120/pll_120.ip
 set_global_assignment -name IP_FILE $this_file_path/ip/native_fp32/native_fp32.ip
 
 # ---------------------------------------------------------- constraints
@@ -126,7 +126,7 @@ if {[lsearch -exact $quartus(args) "compile"] >= 0} {
         set qgen [file normalize [file join $quartus(binpath) .. sopc_builder bin qsys-generate]]
     }
 
-    foreach ip {pll_100 native_fp32} {
+    foreach ip {pll_120 native_fp32} {
         set ip_file [file join $this_file_path ip $ip $ip.ip]
         puts "### qsys-generate $ip"
         # -ignorestderr: qsys-generate prints its licence banner to stderr,

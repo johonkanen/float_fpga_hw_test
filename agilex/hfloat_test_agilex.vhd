@@ -6,8 +6,8 @@
 --   uart_rxd      PIN_AG23  3.3-V LVCMOS
 --   uart_txd      PIN_AG24  3.3-V LVCMOS
 --
--- 25 MHz -> pll_100 IOPLL -> 100 MHz core clock.
--- g_clock_divider 25 -> 100e6 / 25 = 4.000 MBaud.
+-- 25 MHz -> pll_120 IOPLL -> 120 MHz core clock.
+-- g_clock_divider 25 -> 120e6 / 25 = 4.800 MBaud.
 -- The Agilex native_fp32 hard-float DSP path is enabled here.
 ------------------------------------------------------------------------
 library ieee;
@@ -24,21 +24,21 @@ end entity hfloat_test_top;
 
 architecture rtl of hfloat_test_top is
 
-    component pll_100 is
+    component pll_120 is
         port (
             rst       : in  std_logic := 'X'
             ;refclk   : in  std_logic := 'X'
             ;locked   : out std_logic
             ;outclk_0 : out std_logic
         );
-    end component pll_100;
+    end component pll_120;
 
     signal core_clock : std_logic;
     signal pll_locked : std_logic;
 
 begin
 
-    u_pll : component pll_100
+    u_pll : component pll_120
     port map (
         rst       => not reset_reset_n
         ,refclk   => clk_clk
